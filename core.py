@@ -1,7 +1,8 @@
-import pandas as pd
-import argparse
 import time
+import argparse
+import pandas as pd
 from configparser import ConfigParser
+import mysql.connector
 import client
 
 class Fund:
@@ -9,13 +10,22 @@ class Fund:
         config = ConfigParser()
         config.read('config/config.ini')
         self.c = client.Client()
-        self.accounts = self._getAccounts(config['PATHS']['accounts'])
+        self.db_cred = {'host':config['MYSQL']['host'],
+                        'user':config['MYSQL']['user'],
+                        'password':config['MYSQL']['password'],
+                        'db':config['MYSQL']['db']}
+
+        self.accounts = self._getAccounts()
         self.totShares = self.accounts['shares'].sum()
         self._getBalance()
 
 
-    def _getAccounts(self, path):
-        return pd.read_csv(path, index_col='act_id')
+    def _getAccounts(self):
+        cnx = mysql.connector.connect(**self.db_cred)
+        sql = 'select * from accounts;'
+        df = pd.read_sql(sql, cnx, index_col='act_id', parse_dates='register_date')
+        cnx.close()
+        return df
 
 
     def _getBalance(self):
