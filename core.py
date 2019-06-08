@@ -15,7 +15,7 @@ class Fund:
 
 
     def _getAccounts(self, path):
-        return pd.read_csv(path, index_col='ID')
+        return pd.read_csv(path, index_col='act_id')
 
 
     def _getBalance(self):
@@ -70,10 +70,10 @@ if __name__ == '__main__':
     print('IDXBTC: ', fund.getIndexPrice('BTC'))
     print(fund.balance)
     if args.send_balance:
-        for ID in fund.accounts.index:
+        for act_id in fund.accounts.index:
             try:
-                fund.sendBalanceReport(ID)
+                fund.sendBalanceReport(act_id)
             except:
-                print(f'Failed to send email to {fund.accounts.loc[ID, "name"]}')
+                print(f'Failed to send email to {fund.accounts.loc[act_id, "name"]}')
     if args.debug:
             fund.sendBalanceReport(1)
