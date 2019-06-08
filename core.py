@@ -71,6 +71,9 @@ if __name__ == '__main__':
     print(fund.balance)
     if args.send_balance:
         for ID in fund.accounts.index:
-            fund.sendBalanceReport(ID)
+            try:
+                fund.sendBalanceReport(ID)
+            except:
+                print(f'Failed to send email to {fund.accounts.loc[ID, "name"]}')
     if args.debug:
             fund.sendBalanceReport(1)
