@@ -72,13 +72,17 @@ Value by asset:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('-a', '--act_id', type=int, help='Accounts to query')
     parser.add_argument('-m', '--send-balance', action='store_true', help='Send balance report')
     parser.add_argument('-d', '--debug', action='store_true', help='debug mode on')
     args = parser.parse_args()
     fund = Fund()
     print('IDXUSD: ', fund.getIndexPrice('USD'))
     print('IDXBTC: ', fund.getIndexPrice('BTC'))
-    print(fund.balance)
+    if args.act_id:
+        print(fund.getActBalance(args.act_id))
+    else:
+        print(fund.balance)
     if args.send_balance:
         for act_id in fund.accounts.index:
             try:
