@@ -10,18 +10,18 @@ class Fund:
         config = ConfigParser()
         config.read('config/config.ini')
         self.c = client.Client()
-        self.db_cred = {'host':config['MYSQL']['host'],
-                        'user':config['MYSQL']['user'],
-                        'password':config['MYSQL']['password'],
-                        'db':config['MYSQL']['db']}
+        db_cred = {'host':config['MYSQL']['host'],
+                   'user':config['MYSQL']['user'],
+                   'password':config['MYSQL']['password'],
+                   'db':config['MYSQL']['db']}
 
-        self.accounts = self._getAccounts()
+        self.accounts = self._getAccounts(db_cred)
         self.totShares = self.accounts['shares'].sum()
         self._getBalance()
 
 
-    def _getAccounts(self):
-        cnx = mysql.connector.connect(**self.db_cred)
+    def _getAccounts(self, db_cred):
+        cnx = mysql.connector.connect(**db_cred)
         sql = 'select * from accounts;'
         df = pd.read_sql(sql, cnx, index_col='act_id', parse_dates='register_date')
         cnx.close()
@@ -31,12 +31,12 @@ class Fund:
     def _getBalance(self):
         self.timestamp = time.time()
         self.balance = self.c.getBalance()
-        self.idxusd = self.balance.loc['total','val_usd'] / self.totShares
-        self.idxbtc = self.balance.loc['total','val_btc'] / self.totShares
+        self._idxusd = self.balance.loc['total','val_usd'] / self.totShares
+        self._idxbtc = self.balance.loc['total','val_btc'] / self.totShares
 
 
-    def getIndexPrice(self, base='USD'):
-        return getattr(self, f'idx{base.lower()}')
+    def getIdx(self, base='USD'):
+        return getattr(self, f'_idx{base.lower()}')
         
 
     def getActBalance(self, a_id):
@@ -58,8 +58,8 @@ class Fund:
 
 Please look at your snapshot taken at {pd.to_datetime(int(self.timestamp-14400), unit='s')} EST:
 
-Index Price (USD): ${round(self.getIndexPrice('USD'), 4)}
-Index Price (BTC): \u20bf{round(self.getIndexPrice('BTC'), 7)}
+Index Price (USD): ${round(self.getIdx('USD'), 4)}
+Index Price (BTC): \u20bf{round(self.getIdx('BTC'), 7)}
 Total shares: {self.totShares}
 Your shares: {shares}
 Value by asset:
@@ -77,8 +77,8 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--debug', action='store_true', help='debug mode on')
     args = parser.parse_args()
     fund = Fund()
-    print('IDXUSD: ', fund.getIndexPrice('USD'))
-    print('IDXBTC: ', fund.getIndexPrice('BTC'))
+    print('IDXUSD: ', fund.getIdx('USD'))
+    print('IDXBTC: ', fund.getIdx('BTC'))
     if args.act_id:
         print(fund.getActBalance(args.act_id))
     else:
