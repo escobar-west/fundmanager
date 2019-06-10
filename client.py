@@ -3,6 +3,7 @@ import hmac
 import base64
 import pandas as pd
 from configparser import ConfigParser
+from os.path import join, abspath, dirname
 from requests import Session
 from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 import json
@@ -17,7 +18,7 @@ from email.utils import COMMASPACE
 class Client:
     def __init__(self, debug=None):
         config = ConfigParser()
-        config.read('config/config.ini')
+        config.read(join(dirname(abspath(__file__)), 'config/config.ini'))
         self.apiKey = config['KEYS']['apiKey']
         self.secretKey = config['KEYS']['secretKey']
         self.cmcKey = config['KEYS']['cmcKey']

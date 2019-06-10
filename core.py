@@ -1,6 +1,7 @@
 import time
 import argparse
 import pandas as pd
+from os.path import dirname, abspath, join
 from configparser import ConfigParser
 import mysql.connector
 import client
@@ -8,7 +9,7 @@ import client
 class Fund:
     def __init__(self):
         config = ConfigParser()
-        config.read('config/config.ini')
+        config.read(join(dirname(abspath(__file__)), 'config/config.ini'))
         self.c = client.Client()
         db_cred = {'host':config['MYSQL']['host'],
                    'user':config['MYSQL']['user'],
