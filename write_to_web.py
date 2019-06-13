@@ -15,7 +15,7 @@ add_idx = """INSERT INTO fund_data
              (idxusd, idxbtc, weights)
              VALUES (%s, %s, %s);"""
 
-data_idx = (fund.getIdx('USD'), fund.getIdx('BTC'), fund.balance.weights.to_json())
+data_idx = (fund.getIdx('USD'), fund.getIdx('BTC'), fund.balance.weights.round(4).to_json())
 
 cursor.execute(add_idx, data_idx)
 
