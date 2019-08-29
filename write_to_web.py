@@ -3,10 +3,13 @@ import mysql.connector
 from core import Fund
 
 fund = Fund()
-db_cred = {'host':'victorsuriel.com',
-                'user':'victorsu_a',
-                'password':'FUCK!heart@2292#mys',
-                'db':'victorsu_fund'}
+config = ConfigParser()
+config.read(join(dirname(abspath(__file__)), 'config/config.ini'))
+
+db_cred = {'host': config['DB']['host'],
+                'user': config['DB']['user'],
+                'password': config['DB']['password'],
+                'db': config['DB']['database']}
 
 cnx = mysql.connector.connect(**db_cred)
 cursor = cnx.cursor()
