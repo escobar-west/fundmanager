@@ -9,7 +9,7 @@ import client
 class Fund:
     def __init__(self):
         config = ConfigParser()
-        config.read(join(dirname(abspath(__file__)), 'config/config.ini'))
+        config.read(join(dirname(abspath(__file__)), 'config/localconfig.ini'))
         self.c = client.Client()
         db_cred = {'host':config['MYSQL']['host'],
                    'user':config['MYSQL']['user'],
@@ -90,5 +90,6 @@ if __name__ == '__main__':
                 fund.sendBalanceReport(act_id)
             except:
                 print(f'Failed to send email to {fund.accounts.loc[act_id, "name"]}')
+                raise
     if args.debug:
             fund.sendBalanceReport(1)

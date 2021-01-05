@@ -1,10 +1,12 @@
 import pandas as pd
 import mysql.connector
 from core import Fund
+from os.path import join, abspath, dirname
+from configparser import ConfigParser
 
 fund = Fund()
 config = ConfigParser()
-config.read(join(dirname(abspath(__file__)), 'config/config.ini'))
+config.read(join(dirname(abspath(__file__)), 'config/localconfig.ini'))
 
 db_cred = {'host': config['DB']['host'],
                 'user': config['DB']['user'],
