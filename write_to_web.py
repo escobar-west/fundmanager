@@ -1,29 +1,26 @@
+from client import *
 import pandas as pd
 import mysql.connector
-from core import Fund
-from os.path import join, abspath, dirname
-from configparser import ConfigParser
+import json
+import os
 
-fund = Fund()
-config = ConfigParser()
-config.read(join(dirname(abspath(__file__)), 'config/localconfig.ini'))
+bal = getBalances().groupby('asset').balance.sum()
+prices = getPrices(bal.index.tolist())
 
-db_cred = {'host': config['DB']['host'],
-                'user': config['DB']['user'],
-                'password': config['DB']['password'],
-                'db': config['DB']['database']}
+db_cred = {'host': os.getenv('FUND_DB_HOST'),
+                'user': os.getenv('FUND_DB_USER'),
+                'password': os.getenv('FUND_DB_PWORD'),
+                'db': os.getenv('FUND_DB')}
+
 
 cnx = mysql.connector.connect(**db_cred)
 cursor = cnx.cursor()
 
-add_idx = """INSERT INTO fund_data
-             (idxusd, idxbtc, weights)
-             VALUES (%s, %s, %s);"""
+add_idx = """INSERT INTO port_data
+             (balance, price)
+             VALUES (%s, %s);"""
 
-weights = fund.balance.weights.round(4)
-del weights['total']
-weights = weights[weights > 0]
-data_idx = (fund.getIdx('USD'), fund.getIdx('BTC'), weights.to_json())
+data_idx = (json.dumps(bal.to_dict()), json.dumps(prices))
 
 cursor.execute(add_idx, data_idx)
 

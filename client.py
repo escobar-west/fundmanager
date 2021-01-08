@@ -1,25 +1,18 @@
-import hashlib
-import hmac
-import base64
 import pandas as pd
-from configparser import ConfigParser
-from os.path import join, abspath, dirname
 from requests import Session
-from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 import json
 from balance_functions import BALANCE_FUNCTION_DICT
-
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
-from email.utils import COMMASPACE
 import os
 
 
 def getPrices(asset_list):
     if not isinstance(asset_list, list):
         asset_list = [asset_list]
+    if 'USD' in asset_list:
+        price_dict = {'USD': 1.0}
+        asset_list = set(asset_list) - {'USD'}
+    else:
+        price_dict = {}
 
     headers = {
         'Accepts': 'application/json',
@@ -31,10 +24,9 @@ def getPrices(asset_list):
     data = json.loads(response.text)
     if data['status']['error_message'] is not None:
         raise ConnectionError('getPrices failed with message: ' + data['status']['error_message'])
-    price_dict = {}
     for asset in asset_list:
-        price_dict[asset] = data['data'][asset]['quote']['USD']
-    return data
+        price_dict[asset] = data['data'][asset]['quote']['USD']['price']
+    return price_dict
 
 
 def getBalances():
@@ -52,18 +44,7 @@ def getBalances():
 
 
 if __name__ == '__main__':
-    fundSize = 1500
-    #bal = getBalances()
-    print(getPrices(['BTC','ETH','asdf']))
-    
-    #print(bal)
-    #fundSize = bal.loc['total', 'val_usd']
-    #idx = c.calcIndex(fundSize)
-    #print('Target index:')
-    #print(idx)
-
-
-
-
-
-
+    bal = getBalances()
+    print(bal)
+    prices = getPrices(bal.groupby('asset').balance.sum().index.tolist())
+    print(prices)

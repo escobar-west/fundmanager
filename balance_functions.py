@@ -1,16 +1,19 @@
+import os
+import json
+import time
+
 import hashlib
 import hmac
 import base64
-import pandas as pd
-from configparser import ConfigParser
-from os.path import join, abspath, dirname
 from requests import Session
-import requests
-import json
-import time
 from web3 import Web3
-import os
+
 from erc20_utils import get_erc20_bal
+
+
+_COINBASE_TRANSLATE_DICT = {
+    'CGLD': 'CELO'
+}
 
 
 _KRAKEN_TRANSLATE_DICT = {
@@ -44,6 +47,8 @@ def getBalanceCoinbase(apiKey, secretKey):
     asset_dict = {}
     for asset in packet['data']:
         ticker = asset['balance']['currency']
+        if ticker in _COINBASE_TRANSLATE_DICT:
+            ticker = _COINBASE_TRANSLATE_DICT[ticker]
         balance = float(asset['balance']['amount'])
         if balance > 0:
             if ticker not in asset_dict:
@@ -92,60 +97,8 @@ def getBalanceEthereum(ethAddress, *args, **kwargs):
     return asset_dict
     
 
-def getBalanceBinance(apiKey, secretKey):
-    session = Session()
-    headers = {
-        'X-MBX-APIKEY': apiKey
-    }
-    session.headers.update(headers)
-
-    timestamp = session.get('https://binance.com/api/v1/time')
-    timestamp = int(json.loads(timestamp.text)['serverTime'])
-
-    secretKey = bytes(secretKey, encoding='utf-8')
-    message = bytes(f'timestamp={timestamp}', encoding='utf-8')
-    signature = hmac.new(secretKey, message, digestmod=hashlib.sha256).hexdigest()
-    url = f'https://api.binance.com/api/v3/account?timestamp={timestamp}&signature={signature}'
-
-    response = session.get(url)
-    data = json.loads(response.text)
-    index = []
-    balances = []
-    val_btc = []
-    for datum in data['balances']:
-        bal = float(datum['free']) + float(datum['locked'])
-        if bal == 0:
-            continue
-        asset = datum['asset']
-        index.append(asset)
-        balances.append(bal)
-        if asset == 'BTC':
-            price_btc = 1.0
-        elif asset in ['USDT','TUSD','USDC','PAX']:
-            price_btc = session.get(f'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
-            price_btc = 1 / float(json.loads(price_btc.text)['price'])
-        else:
-            price_btc = session.get(f'https://api.binance.com/api/v3/ticker/price?symbol={asset+"BTC"}')
-            price_btc = float(json.loads(price_btc.text)['price'])
-        val_btc.append(balances[-1] * price_btc)
-
-    btc_price = session.get(f'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
-    btc_price = float(json.loads(btc_price.text)['price'])
-    val_usd = [x * btc_price for x in val_btc]
-    weights = [x / sum(val_usd) for x in val_usd]
-    
-    df = pd.DataFrame({'weights': weights,
-                       'balances':balances,
-                       'val_usd': val_usd,
-                       f'val_btc': val_btc,}, index=index)
-    df = df.sort_values('val_usd', ascending=False)
-    df.loc['total'] = df.sum()
-    
-    return df
-
 BALANCE_FUNCTION_DICT = {
     'coinbase': getBalanceCoinbase,
     'kraken': getBalanceKraken,
-    'binance': getBalanceBinance,
     'ethereum': getBalanceEthereum,
 }
