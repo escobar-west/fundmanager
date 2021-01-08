@@ -1,4 +1,4 @@
-from client import *
+from data_aggregator import *
 import pandas as pd
 import mysql.connector
 import json

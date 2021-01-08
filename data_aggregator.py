@@ -45,6 +45,9 @@ def getBalances():
 
 if __name__ == '__main__':
     bal = getBalances()
+    prices = getPrices(bal['asset'].unique().tolist())
+    price_df = pd.Series(prices).to_frame(name='price')
+    bal = pd.merge(bal, price_df, left_on='asset',right_index=True)
+    bal['value'] = bal['balance'] * bal['price']
     print(bal)
-    prices = getPrices(bal.groupby('asset').balance.sum().index.tolist())
-    print(prices)
+    print('Total Portfolio Value: {}'.format(bal['value'].sum()))
